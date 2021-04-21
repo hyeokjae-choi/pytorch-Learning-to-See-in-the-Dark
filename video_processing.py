@@ -129,6 +129,39 @@ def video_smoothing():
         pool.map(func, raw_video_list)
 
 
+def _gic_video(div, save_dir, g, raw_video_fpath):
+    fname = osp.splitext(osp.basename(raw_video_fpath))[0]
+    label = raw_video_fpath.split(os.sep)[-2]
+
+    raw_frame_list = read_video(raw_video_fpath)
+    save_frame_list = []
+    for frame in raw_frame_list:
+        frame = frame.astype(np.float32)
+        frame = ((frame / 255) ** g) * 255
+        frame = frame.astype(np.uint8)
+        save_frame_list.append(frame)
+
+    # save results
+    if not osp.isdir(osp.join(save_dir, div, label)):
+        os.makedirs(osp.join(save_dir, div, label))
+    save_video(save_frame_list, osp.join(save_dir, div, label, f"{fname}.avi"))
+
+def gic_video():
+    div = "Train"
+    gamma = 0.4
+
+    raw_data_dir = "/data/hyeokjae/data/UG2-2021-Track2.1/video"
+    save_dir = "/data/hyeokjae/results/UG2-2021/light_enhancement/gic/Track2.1"
+
+    raw_video_list = glob.glob(osp.join(raw_data_dir, div, "*", "*"))
+
+    num_cores = 8  # multiprocessing.cpu_count()
+    with multiprocessing.Pool(processes=num_cores) as pool:
+        func = partial(_gic_video, div, save_dir, gamma)
+        pool.map(func, raw_video_list)
+
+
 if __name__ == "__main__":
     # video2images()
-    video_smoothing()
+    # video_smoothing()
+    gic_video()
